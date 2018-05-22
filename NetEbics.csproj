@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <PackageId>NetEbics</PackageId>
+    <VersionPrefix>0.1.0</VersionPrefix>
+    <Authors>Bjoern Kuensting</Authors>
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <AssemblyTitle>.NET EBICS Client Library</AssemblyTitle>
+    <Copyright>Bjoern Kuensting</Copyright>
+    <DefineConstants>$(DefineConstants)</DefineConstants>
+    <LangVersion>7.2</LangVersion>
+    <AssemblyName>NetEbics</AssemblyName>
+    <RootNamespace>NetEbics</RootNamespace>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugType>none</DebugType>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="BouncyCastle.NetCore" Version="1.8.1.3" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="2.1.0-rc1-final" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="2.1.0-rc1-final" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="2.1.0-rc1-final" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="2.1.0-rc1-final" />
+    <PackageReference Include="StatePrinter" Version="3.0.1" />
+    <PackageReference Include="System.Security.Cryptography.Xml" Version="4.5.0-rc1" />
+    <PackageReference Include="Zlib.Portable" Version="1.11.0" />
+  </ItemGroup>
+</Project>
