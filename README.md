@@ -1,6 +1,6 @@
 # NetEbics -- .NET Core EBICS Client Library
 
-This is a client library implementing the [EBICS](https://ebics.org) protocol for business online banking.
+This is a client library implementing the [EBICS](https://www.ebics.org) protocol for business online banking.
 
 The library is written in C# (7.2) using .NET Core 2.x and was tested with private/public keys (PEM files) on Linux/Windows. 
 
@@ -9,7 +9,7 @@ The library is written in C# (7.2) using .NET Core 2.x and was tested with priva
 ## Limitations
 
 * Usage with certificates has been prepared but not completely implemented yet. NetEbics works with private/public keys.
-* Only version A005 for signatures can be used. A006 uses PSS padding, which is currently not supported by .NET Core. Bouncy Castle is only used for PEM file and certificate management.
+* Only version A005 for signatures can be used. A006 uses PSS padding, which is currently not supported by .NET Core 2.x. Bouncy Castle is only used for PEM file and certificate management.
 * Only version E002 for encryption can be used.
 * Only version X002 for authentication can be used.
 * NetEbics was developed using EBICS Version H004, but H005 should work.
