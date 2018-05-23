@@ -1,6 +1,6 @@
 # NetEbics -- .NET Core EBICS Client Library
 
-This is a client library implementing the [EBICS](https://www.ebics.org) protocol for business online banking.
+This is a client library implementing the [EBICS](http://www.ebics.org) protocol for business online banking.
 
 The library is written in C# (7.2) using .NET Core 2.x and was tested with private/public keys (PEM files) on Linux/Windows. 
 
