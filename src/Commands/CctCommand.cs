@@ -8,8 +8,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Text;
 using System.Xml;
 using System.Xml.Linq;
@@ -81,7 +81,7 @@ namespace NetEbics.Commands
             }
             catch (Exception ex)
             {
-                throw new DeserializationException($"can't deserialize {OrderType} response", ex, payload);
+                throw new DeserializationException($"Can't deserialize {OrderType} response", ex, payload);
             }
         }
 
@@ -95,10 +95,11 @@ namespace NetEbics.Commands
                 trxCount += pi.CreditTransferTransactionInfos.Count();
                 foreach (var cti in pi.CreditTransferTransactionInfos)
                 {
-                    if (!decimal.TryParse(cti.Amount, out var amount))
+                    if (!decimal.TryParse(cti.Amount, NumberStyles.Currency, CultureInfo.InvariantCulture,
+                        out var amount))
                     {
                         throw new CreateRequestException(
-                            $"invalid amount in CreditTransferInfo of command {OrderType}");
+                            $"Invalid amount in CreditTransferInfo of command {OrderType}");
                     }
 
                     sum += amount;
@@ -116,10 +117,11 @@ namespace NetEbics.Commands
                 {
                     var endToEndID = cti.EndToEndId ?? "NOTPROVIDED";
 
-                    if (!decimal.TryParse(cti.Amount, out var amount))
+                    if (!decimal.TryParse(cti.Amount, NumberStyles.Currency, CultureInfo.InvariantCulture,
+                        out var amount))
                     {
                         throw new CreateRequestException(
-                            $"invalid amount in CreditTransferInfo of command {OrderType}");
+                            $"Invalid amount in CreditTransferInfo of command {OrderType}");
                     }
 
                     ctrlSum += amount;
@@ -131,7 +133,7 @@ namespace NetEbics.Commands
                         new XElement(ns + XmlNames.Amt,
                             new XElement(ns + XmlNames.InstdAmt,
                                 new XAttribute(XmlNames.Ccy, cti.CurrencyCode),
-                                amount.ToString("F2")
+                                amount.ToString("F2", CultureInfo.InvariantCulture)
                             )
                         ),
                         new XElement(ns + XmlNames.CdtrAgt,
@@ -167,7 +169,7 @@ namespace NetEbics.Commands
                     new XElement(ns + XmlNames.PmtMtd, "TRF"),
                     new XElement(ns + XmlNames.BtchBookg, pi.BatchBooking.ToString().ToLower()),
                     new XElement(ns + XmlNames.NbOfTxs, pi.CreditTransferTransactionInfos.Count().ToString()),
-                    new XElement(ns + XmlNames.CtrlSum, ctrlSum.ToString("F2")),
+                    new XElement(ns + XmlNames.CtrlSum, ctrlSum.ToString("F2", CultureInfo.InvariantCulture)),
                     new XElement(ns + XmlNames.PmtTpInf,
                         new XElement(ns + XmlNames.SvcLvl,
                             new XElement(ns + XmlNames.Cd, "SEPA")
@@ -204,7 +206,7 @@ namespace NetEbics.Commands
                         new XElement(ns + XmlNames.MsgId, CryptoUtils.GetNonce()),
                         new XElement(ns + XmlNames.CreDtTm, CryptoUtils.GetUtcTimeNow()),
                         new XElement(ns + XmlNames.NbOfTxs, trxCount.ToString()),
-                        new XElement(ns + XmlNames.CtrlSum, sum.ToString("F2")),
+                        new XElement(ns + XmlNames.CtrlSum, sum.ToString("F2", CultureInfo.InvariantCulture)),
                         new XElement(ns + XmlNames.InitgPty,
                             new XElement(ns + XmlNames.Nm, Params.InitiatingParty)
                         )
@@ -229,17 +231,7 @@ namespace NetEbics.Commands
         {
             var xmlStr = FormatCctXml(doc);
 
-            byte[] xmlStrDigest;
-            using (var hash = SHA256.Create())
-            {
-                xmlStrDigest = hash.ComputeHash(Encoding.UTF8.GetBytes(xmlStr));
-            }
-
-            // TODO: distinguish between A005 and A006
-            // netcore doesn't support PSS padding right now
-            var signedXmlStr =
-                Config.User.SignKeys.PrivateKey.SignHash(xmlStrDigest, HashAlgorithmName.SHA256,
-                    RSASignaturePadding.Pkcs1);
+            var signedXmlStr = SignData(Encoding.UTF8.GetBytes(xmlStr), Config.User.SignKeys);
 
             var userSigData = new UserSignatureData
             {
@@ -291,7 +283,7 @@ namespace NetEbics.Commands
                                 }
                             }
                         }
-                    ).Select(req => SignXml(req.Serialize().ToXmlDocument(), null, null)).ToList();
+                    ).Select(req => AuthenticateXml(req.Serialize().ToXmlDocument(), null, null)).ToList();
                 }
                 catch (EbicsException)
                 {
@@ -317,11 +309,11 @@ namespace NetEbics.Commands
 
                     var userSigData = CreateUserSigData(cctDoc);
                     s_logger.LogDebug("Created user signature data:\n{data}", userSigData.ToString());
-                    
+
                     var userSigDataXmlStr = userSigData.ToString(SaveOptions.DisableFormatting);
                     var userSigDataComp = Compress(Encoding.UTF8.GetBytes(userSigDataXmlStr));
                     var userSigDataEnc = EncryptAes(userSigDataComp, _transactionKey);
-                    
+
                     var cctDocXmlStr = FormatCctXml(cctDoc);
                     var cctDocComp = Compress(Encoding.UTF8.GetBytes(cctDocXmlStr));
                     var cctDocEnc = EncryptAes(cctDocComp, _transactionKey);
@@ -395,8 +387,8 @@ namespace NetEbics.Commands
 
                     var doc = initReq.Serialize();
                     doc.Descendants(nsEBICS + XmlNames.SignatureData).FirstOrDefault()
-                        .Add(Convert.ToBase64String(userSigDataEnc));
-                    return (request: SignXml(doc.ToXmlDocument(), null, null), segments: segments);
+                        ?.Add(Convert.ToBase64String(userSigDataEnc));
+                    return (request: AuthenticateXml(doc.ToXmlDocument(), null, null), segments: segments);
                 }
                 catch (EbicsException)
                 {

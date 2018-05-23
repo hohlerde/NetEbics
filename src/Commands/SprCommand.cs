@@ -9,7 +9,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Text;
 using System.Xml;
 using System.Xml.Linq;
@@ -46,11 +45,7 @@ namespace NetEbics.Commands
             {
                 try
                 {
-                    // TODO: distinguish between A005 and A006
-                    // netcore currentyl doesn't support PSS padding in version 2.x
-                    var signedData =
-                        Config.User.SignKeys.PrivateKey.SignData(Encoding.ASCII.GetBytes(" "), HashAlgorithmName.SHA256,
-                            RSASignaturePadding.Pkcs1);
+                    var signedData = SignData(Encoding.ASCII.GetBytes(" "), Config.User.SignKeys);
 
                     var userSigData = new UserSignatureData
                     {
@@ -135,7 +130,7 @@ namespace NetEbics.Commands
                     var xmlInitReq = initReq.Serialize();
                     xmlInitReq.Descendants(nsEbics + XmlNames.SignatureData).FirstOrDefault()
                         .Add(Convert.ToBase64String(userSigDataEnc));
-                    return SignXml(xmlInitReq.ToXmlDocument(), null, null);
+                    return AuthenticateXml(xmlInitReq.ToXmlDocument(), null, null);
                 }
                 catch (EbicsException)
                 {

@@ -15,6 +15,7 @@ using System.Security.Cryptography.Xml;
 using System.Text;
 using System.Xml;
 using System.Xml.Linq;
+using NetEbics.Config;
 
 namespace NetEbics.Xml
 {
@@ -26,20 +27,23 @@ namespace NetEbics.Xml
 
         private const string _digestAlg = "http://www.w3.org/2001/04/xmlenc#sha256";
         private const string _signAlg = "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256";
+        private const string _canonAlg = "http://www.w3.org/TR/2001/REC-xml-c14n-20010315";
 
         public const string DefaultReferenceUri = "#xpointer(//*[@authenticate='true'])";
 
         public string ReferenceUri { private get; set; }
-        public RSA SigningKey { private get; set; }
+        public RSA SignatureKey { private get; set; }
+        public RSASignaturePadding SignaturePadding { private get; set; }
+
         public string CanonicalizationAlgorithm { private get; set; }
         public string DigestAlgorithm { private get; set; }
         public string SignatureAlgorithm { private get; set; }
 
         public byte[] DigestValue => _digestValue;
-
         public byte[] SignatureValue => _signatureValue;
 
-        public XmlNamespaceManager NamespaceManager { get; set; }
+        public XmlNamespaceManager NamespaceManager { private get; set; }
+        public NamespaceConfig Namespaces { private get; set; }
 
         public CustomSignedXml(XmlDocument doc)
         {
@@ -116,17 +120,22 @@ namespace NetEbics.Xml
         {
             if (DigestAlgorithm != _digestAlg)
             {
-                throw new CryptographicException($"digest algorithm not supported. use: {_digestAlg}");
+                throw new CryptographicException($"Digest algorithm not supported. Use: {_digestAlg}");
             }
 
             if (SignatureAlgorithm != _signAlg)
             {
-                throw new CryptographicException($"signature algorithm not supported. use: {_signAlg}");
+                throw new CryptographicException($"Signature algorithm not supported. Use: {_signAlg}");
             }
 
-            if (SigningKey == null)
+            if (CanonicalizationAlgorithm != _canonAlg)
             {
-                throw new CryptographicException($"{nameof(SigningKey)} is null");
+                throw new CryptographicException($"Canonicalization algorithm not supported. Use: {_canonAlg}");
+            }
+
+            if (SignatureKey == null)
+            {
+                throw new CryptographicException($"{nameof(SignatureKey)} is null");
             }
 
             if (ReferenceUri == null)
@@ -145,7 +154,7 @@ namespace NetEbics.Xml
 
             if (nodes.Count == 0)
             {
-                throw new CryptographicException("no references found");
+                throw new CryptographicException("No references found");
             }
 
             _digestValue = CanonicalizeAndDigest(nodes);
@@ -155,7 +164,7 @@ namespace NetEbics.Xml
             nodes = signedInfo.ToXmlDocument().SelectNodes("*");
             var signedInfoDigest = CanonicalizeAndDigest(nodes);
             _signatureValue =
-                SigningKey.SignHash(signedInfoDigest, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+                SignatureKey.SignHash(signedInfoDigest, HashAlgorithmName.SHA256, SignaturePadding);
         }
     }
 }

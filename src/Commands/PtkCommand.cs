@@ -104,7 +104,7 @@ namespace NetEbics.Commands
                     }
                 };
 
-                return SignXml(receiptReq.Serialize().ToXmlDocument(), null, null);
+                return AuthenticateXml(receiptReq.Serialize().ToXmlDocument(), null, null);
             }
             catch (EbicsException)
             {
@@ -166,7 +166,7 @@ namespace NetEbics.Commands
                         Revision = Config.Revision,
                     };
 
-                    return SignXml(initReq.Serialize().ToXmlDocument(), null, null);
+                    return AuthenticateXml(initReq.Serialize().ToXmlDocument(), null, null);
                 }
                 catch (EbicsException)
                 {

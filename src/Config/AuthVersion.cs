@@ -10,8 +10,6 @@ namespace NetEbics.Config
 {
     public enum AuthVersion
     {
-        X001,
-        X002,
-        X_Unknown
+        X002
     }
 }

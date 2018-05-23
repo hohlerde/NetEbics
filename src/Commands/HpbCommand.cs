@@ -44,12 +44,12 @@ namespace NetEbics.Commands
 
                     var doc = XDocument.Parse(payload);
                     var xph = new XPathHelper(doc, Namespaces);
-                    
+
                     Response.Bank = new BankParams();
 
                     Response.OrderId = xph.GetOrderID()?.Value;
                     Response.TimestampBankParameter = ParseTimestamp(xph.GetTimestampBankParameter()?.Value);
-                    
+
                     if (dr.HasError)
                     {
                         return dr;
@@ -59,9 +59,9 @@ namespace NetEbics.Commands
                     var deflatedOd = Decompress(decryptedOd);
                     var strResp = Encoding.UTF8.GetString(deflatedOd);
                     var hpbrod = XDocument.Parse(strResp);
-                    
+
                     s_logger.LogDebug("Order data:\n{orderData}", hpbrod.ToString());
-                    
+
                     var r = new XPathHelper(hpbrod, Namespaces);
 
                     if (r.GetAuthenticationPubKeyInfoX509Data() != null || r.GetEncryptionPubKeyInfoX509Data() != null)
@@ -124,8 +124,10 @@ namespace NetEbics.Commands
                         throw new DeserializationException($"{XmlNames.EncryptionPubKeyInfo} missing", payload);
                     }
 
-                    s_logger.LogDebug("Bank authentication key digest: {digest}", CryptoUtils.Print(Response.Bank?.AuthKeys?.Digest));
-                    s_logger.LogDebug("Bank encryption key digest: {digest}", CryptoUtils.Print(Response.Bank?.CryptKeys?.Digest));
+                    s_logger.LogDebug("Bank authentication key digest: {digest}",
+                        CryptoUtils.Print(Response.Bank?.AuthKeys?.Digest));
+                    s_logger.LogDebug("Bank encryption key digest: {digest}",
+                        CryptoUtils.Print(Response.Bank?.CryptKeys?.Digest));
 
                     return dr;
                 }
@@ -179,7 +181,7 @@ namespace NetEbics.Commands
                         Namespaces = Namespaces
                     };
 
-                    reqs.Add(SignXml(req.Serialize().ToXmlDocument(), null, null));
+                    reqs.Add(AuthenticateXml(req.Serialize().ToXmlDocument(), null, null));
                     return reqs;
                 }
                 catch (Exception e)

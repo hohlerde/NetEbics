@@ -8,8 +8,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Text;
 using System.Xml;
 using System.Xml.Linq;
@@ -94,7 +94,8 @@ namespace NetEbics.Commands
                 trxCount += pi.DirectDebitTransactionInfos.Count();
                 foreach (var cti in pi.DirectDebitTransactionInfos)
                 {
-                    if (!decimal.TryParse(cti.Amount, out var amount))
+                    if (!decimal.TryParse(cti.Amount, NumberStyles.Currency, CultureInfo.InvariantCulture,
+                        out var amount))
                     {
                         throw new CreateRequestException(
                             $"Invalid amount in DirectDebitTransactionInfo of command {OrderType}");
@@ -115,7 +116,8 @@ namespace NetEbics.Commands
                 {
                     var endToEndID = dti.EndToEndId ?? "NOTPROVIDED";
 
-                    if (!decimal.TryParse(dti.Amount, out var amount))
+                    if (!decimal.TryParse(dti.Amount, NumberStyles.Currency, CultureInfo.InvariantCulture,
+                        out var amount))
                     {
                         throw new CreateRequestException(
                             $"Invalid amount in DirectDebitTransactionInfo of command {OrderType}");
@@ -129,7 +131,7 @@ namespace NetEbics.Commands
                         ),
                         new XElement(ns + XmlNames.InstdAmt,
                             new XAttribute(XmlNames.Ccy, dti.CurrencyCode),
-                            amount.ToString("F2")
+                            amount.ToString("F2", CultureInfo.InvariantCulture)
                         ),
                         new XElement(ns + XmlNames.DrctDbtTx,
                             new XElement(ns + XmlNames.MndtRltdInf,
@@ -165,7 +167,7 @@ namespace NetEbics.Commands
                     new XElement(ns + XmlNames.PmtMtd, "DD"),
                     new XElement(ns + XmlNames.BtchBookg, pi.BatchBooking.ToString().ToLower()),
                     new XElement(ns + XmlNames.NbOfTxs, pi.DirectDebitTransactionInfos.Count().ToString()),
-                    new XElement(ns + XmlNames.CtrlSum, ctrlSum.ToString("F2")),
+                    new XElement(ns + XmlNames.CtrlSum, ctrlSum.ToString("F2", CultureInfo.InvariantCulture)),
                     new XElement(ns + XmlNames.PmtTpInf,
                         new XElement(ns + XmlNames.SvcLvl,
                             new XElement(ns + XmlNames.Cd, "SEPA")
@@ -205,7 +207,7 @@ namespace NetEbics.Commands
                                 )
                             )
                         )
-                    )                    
+                    )
                 );
 
                 xmlDtis.ForEach(x => xmlPayInfo.Add(x));
@@ -218,7 +220,7 @@ namespace NetEbics.Commands
                         new XElement(ns + XmlNames.MsgId, CryptoUtils.GetNonce()),
                         new XElement(ns + XmlNames.CreDtTm, CryptoUtils.GetUtcTimeNow()),
                         new XElement(ns + XmlNames.NbOfTxs, trxCount.ToString()),
-                        new XElement(ns + XmlNames.CtrlSum, sum.ToString("F2")),
+                        new XElement(ns + XmlNames.CtrlSum, sum.ToString("F2", CultureInfo.InvariantCulture)),
                         new XElement(ns + XmlNames.InitgPty,
                             new XElement(ns + XmlNames.Nm, Params.InitiatingParty)
                         )
@@ -243,17 +245,7 @@ namespace NetEbics.Commands
         {
             var xmlStr = FormatCctXml(doc);
 
-            byte[] xmlStrDigest;
-            using (var hash = SHA256.Create())
-            {
-                xmlStrDigest = hash.ComputeHash(Encoding.UTF8.GetBytes(xmlStr));
-            }
-
-            // TODO: distinguish between A005 and A006
-            // netcore doesn't support PSS padding right now
-            var signedXmlStr =
-                Config.User.SignKeys.PrivateKey.SignHash(xmlStrDigest, HashAlgorithmName.SHA256,
-                    RSASignaturePadding.Pkcs1);
+            var signedXmlStr = SignData(Encoding.UTF8.GetBytes(xmlStr), Config.User.SignKeys);
 
             var userSigData = new UserSignatureData
             {
@@ -305,7 +297,7 @@ namespace NetEbics.Commands
                                 }
                             }
                         }
-                    ).Select(req => SignXml(req.Serialize().ToXmlDocument(), null, null)).ToList();
+                    ).Select(req => AuthenticateXml(req.Serialize().ToXmlDocument(), null, null)).ToList();
                 }
                 catch (EbicsException)
                 {
@@ -409,8 +401,8 @@ namespace NetEbics.Commands
 
                     var doc = initReq.Serialize();
                     doc.Descendants(nsEbics + XmlNames.SignatureData).FirstOrDefault()
-                        .Add(Convert.ToBase64String(userSigDataEnc));
-                    return (request: SignXml(doc.ToXmlDocument(), null, null), segments: segments);
+                        ?.Add(Convert.ToBase64String(userSigDataEnc));
+                    return (request: AuthenticateXml(doc.ToXmlDocument(), null, null), segments: segments);
                 }
                 catch (EbicsException)
                 {

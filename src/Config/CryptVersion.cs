@@ -10,8 +10,6 @@ namespace NetEbics.Config
 {
     public enum CryptVersion
     {
-        E001,
-        E002,
-        E_Unknown
+        E002
     }
 }

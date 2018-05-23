@@ -74,7 +74,7 @@ namespace NetEbics.Commands
                     Phase = transPhase,
                     ReportText = xph.GetReportText()?.Value
                 };
-                
+
                 s_logger.LogDebug("DeserializeResponse: {response}", dr);
                 return dr;
             }
@@ -89,13 +89,9 @@ namespace NetEbics.Commands
                 if (!Enum.TryParse<CryptVersion>(xph.GetEncryptionPubKeyDigestVersion()?.Value,
                     out var transKeyEncVersion))
                 {
-                    throw new DeserializationException("unknown encryption version");
-                }
-
-                if (transKeyEncVersion != CryptVersion.E002)
-                {
                     throw new DeserializationException(
-                        string.Format("encryption version {0} not supported", transKeyEncVersion), xph.Xml);
+                        string.Format("Encryption version {0} not supported",
+                            xph.GetEncryptionPubKeyDigestVersion()?.Value), xph.Xml);
                 }
 
                 var encryptionPubKeyDigest = Convert.FromBase64String(xph.GetEncryptionPubKeyDigest()?.Value);
@@ -107,7 +103,7 @@ namespace NetEbics.Commands
                 if (!StructuralComparisons.StructuralEqualityComparer.Equals(Config.User.CryptKeys.Digest,
                     encryptionPubKeyDigest))
                 {
-                    throw new DeserializationException("wrong digest in xml", xph.Xml);
+                    throw new DeserializationException("Wrong digest in xml", xph.Xml);
                 }
 
                 return decryptedOd;
@@ -259,7 +255,7 @@ namespace NetEbics.Commands
             }
         }
 
-        protected XmlDocument SignXml(XmlDocument doc, string referenceUri,
+        protected XmlDocument AuthenticateXml(XmlDocument doc, string referenceUri,
             IDictionary<string, string> cnm)
         {
             using (new MethodLogger(s_logger))
@@ -267,7 +263,8 @@ namespace NetEbics.Commands
                 doc.PreserveWhitespace = true;
                 var sigDoc = new CustomSignedXml(doc)
                 {
-                    SigningKey = Config.User.AuthKeys.PrivateKey,
+                    SignatureKey = Config.User.AuthKeys.PrivateKey,
+                    SignaturePadding = RSASignaturePadding.Pkcs1,
                     CanonicalizationAlgorithm = SignedXml.XmlDsigC14NTransformUrl,
                     SignatureAlgorithm = s_signatureAlg,
                     DigestAlgorithm = s_digestAlg,
@@ -299,9 +296,20 @@ namespace NetEbics.Commands
             }
         }
 
+        protected byte[] SignData(byte[] data, SignKeyPair kp)
+        {
+            if (kp.Version != SignVersion.A005)
+            {
+                throw new CryptographicException($"Only signature version {SignVersion.A005} is supported right now");
+            }
+
+            return kp.PrivateKey.SignData(data, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+        }
+
         public override string ToString()
         {
-            return $"{nameof(OrderType)}: {OrderType}, {nameof(OrderAttribute)}: {OrderAttribute}, {nameof(TransactionType)}: {TransactionType}";
+            return
+                $"{nameof(OrderType)}: {OrderType}, {nameof(OrderAttribute)}: {OrderAttribute}, {nameof(TransactionType)}: {TransactionType}";
         }
     }
 }

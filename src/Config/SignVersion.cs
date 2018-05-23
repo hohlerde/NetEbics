@@ -11,7 +11,6 @@ namespace NetEbics.Config
     public enum SignVersion
     {
         A005,
-        A006,
-        A_Unknown
+        A006
     }
 }
