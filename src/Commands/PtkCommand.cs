@@ -43,13 +43,13 @@ namespace NetEbics.Commands
                     var doc = XDocument.Parse(payload);
                     var xph = new XPathHelper(doc, Namespaces);
                     var sb = new StringBuilder();
-                    
+
                     if (dr.HasError || dr.IsRecoverySync)
                     {
                         return dr;
                     }
 
-                    // do signature validation here
+                    VerifyXml(payload);
 
                     if (dr.Phase != TransactionPhase.Initialisation)
                     {
