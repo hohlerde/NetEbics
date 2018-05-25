@@ -296,6 +296,32 @@ namespace NetEbics.Commands
             }
         }
 
+        protected void VerifyXml(string payload)
+        {
+            var xmlDoc = new XmlDocument { PreserveWhitespace = true};
+            xmlDoc.LoadXml(payload);
+            var sigDoc = new CustomSignedXml(xmlDoc)
+            {
+                Namespaces = Namespaces,
+                SignatureKey = Config.Bank.AuthKeys.PublicKey,
+                SignaturePadding = RSASignaturePadding.Pkcs1,
+                CanonicalizationAlgorithm = SignedXml.XmlDsigC14NTransformUrl,
+                SignatureAlgorithm = s_signatureAlg,
+                DigestAlgorithm = s_digestAlg,
+                ReferenceUri = CustomSignedXml.DefaultReferenceUri
+            };
+
+            if (sigDoc.VerifySignature())
+            {
+                s_logger.LogDebug($"Authentication OK for {OrderType} response");
+                return;
+            }
+            
+            s_logger.LogError($"Authentication erroneous for {OrderType} response");
+            throw new DeserializationException($"Authentication erroneous for {OrderType} response",
+                payload);
+        }
+
         protected byte[] SignData(byte[] data, SignKeyPair kp)
         {
             if (kp.Version != SignVersion.A005)

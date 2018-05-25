@@ -6,6 +6,7 @@
  * file 'LICENSE.txt', which is part of this source code package.
  */
 
+using System.Collections.Generic;
 using System.Xml;
 using System.Xml.Linq;
 using System.Xml.XPath;
@@ -13,7 +14,7 @@ using NetEbics.Config;
 
 namespace NetEbics.Xml
 {
-    internal class XPathHelper
+   internal class XPathHelper
     {
         private XmlNamespaceManager _nm;
         private NamespaceConfig _nsc;
@@ -168,23 +169,43 @@ namespace NetEbics.Xml
             return _doc.XPathSelectElement(
                 $"/*/{DNS(XmlNames.header)}/{DNS(XmlNames.staticHeader)}/{DNS(XmlNames.TransactionID)}", _nm);
         }
-        
+
         internal XElement GetNumSegments()
         {
             return _doc.XPathSelectElement(
                 $"/*/{DNS(XmlNames.header)}/{DNS(XmlNames.staticHeader)}/{DNS(XmlNames.NumSegments)}", _nm);
         }
-        
+
         internal XElement GetTransactionPhase()
         {
             return _doc.XPathSelectElement(
                 $"/*/{DNS(XmlNames.header)}/{DNS(XmlNames.mutable)}/{DNS(XmlNames.TransactionPhase)}", _nm);
         }
-        
+
         internal XElement GetSegmentNumber()
         {
             return _doc.XPathSelectElement(
                 $"/*/{DNS(XmlNames.header)}/{DNS(XmlNames.mutable)}/{DNS(XmlNames.SegmentNumber)}", _nm);
         }
+
+        internal XElement GetAuthSignatureDigestValue()
+        {
+            return _doc.XPathSelectElement(
+                $"/*/{DNS(XmlNames.AuthSignature)}/{SNS(XmlNames.SignedInfo)}/{SNS(XmlNames.Reference)}/{SNS(XmlNames.DigestValue)}",
+                _nm);
+        }
+
+        internal XElement GetAuthSignatureValue()
+        {
+            return _doc.XPathSelectElement(
+                $"/*/{DNS(XmlNames.AuthSignature)}/{SNS(XmlNames.SignatureValue)}", _nm);
+        }
+        
+        internal IEnumerable<XElement> GetAuthSignatureReferences()
+        {
+            return _doc.XPathSelectElements(
+                $"/*/{DNS(XmlNames.AuthSignature)}/{SNS(XmlNames.SignedInfo)}/{SNS(XmlNames.Reference)}",
+                _nm);
+        } 
     }
 }
