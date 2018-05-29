@@ -49,8 +49,6 @@ namespace NetEbics.Commands
                         return dr;
                     }
 
-                    VerifyXml(payload);
-
                     if (dr.Phase != TransactionPhase.Initialisation)
                     {
                         return dr;

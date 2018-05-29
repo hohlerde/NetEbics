@@ -40,6 +40,8 @@ namespace NetEbics.Commands
         internal abstract XmlDocument InitRequest { get; }
         internal abstract XmlDocument ReceiptRequest { get; }
 
+        protected virtual bool VerifyAuthenticationSignature => true;
+
         protected static string s_signatureAlg => "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256";
         protected static string s_digestAlg => "http://www.w3.org/2001/04/xmlenc#sha256";
 
@@ -54,6 +56,11 @@ namespace NetEbics.Commands
         {
             using (new MethodLogger(s_logger))
             {
+                if (VerifyAuthenticationSignature)
+                {
+                    VerifyXml(payload);
+                }
+
                 var doc = XDocument.Parse(payload);
                 var xph = new XPathHelper(doc, Namespaces);
                 int.TryParse(xph.GetTechReturnCode()?.Value, out var techCode);

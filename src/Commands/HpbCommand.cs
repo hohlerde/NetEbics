@@ -33,6 +33,7 @@ namespace NetEbics.Commands
         internal override XmlDocument ReceiptRequest => null;
         internal override string OrderType => "HPB";
         internal override string OrderAttribute => "DZHNN";
+        protected override bool VerifyAuthenticationSignature => false;
 
         internal override DeserializeResponse Deserialize(string payload)
         {
