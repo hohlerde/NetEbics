@@ -153,5 +153,14 @@ namespace NetEbics
                 return resp;
             }
         }
+        
+        public HpdResponse HPD(HpdParams p)
+        {
+            using (new MethodLogger(Logger))
+            {
+                var resp = _commandHandler.Send<HpdResponse>(p);
+                return resp;
+            }
+        }
     }
 }

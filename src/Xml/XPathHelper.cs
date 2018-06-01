@@ -6,7 +6,9 @@
  * file 'LICENSE.txt', which is part of this source code package.
  */
 
+using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Xml;
 using System.Xml.Linq;
 using System.Xml.XPath;
@@ -14,7 +16,7 @@ using NetEbics.Config;
 
 namespace NetEbics.Xml
 {
-   internal class XPathHelper
+    internal class XPathHelper
     {
         private XmlNamespaceManager _nm;
         private NamespaceConfig _nsc;
@@ -200,12 +202,22 @@ namespace NetEbics.Xml
             return _doc.XPathSelectElement(
                 $"/*/{DNS(XmlNames.AuthSignature)}/{SNS(XmlNames.SignatureValue)}", _nm);
         }
-        
+
         internal IEnumerable<XElement> GetAuthSignatureReferences()
         {
             return _doc.XPathSelectElements(
                 $"/*/{DNS(XmlNames.AuthSignature)}/{SNS(XmlNames.SignedInfo)}/{SNS(XmlNames.Reference)}",
                 _nm);
-        } 
+        }
+
+        internal IEnumerable<XElement> GetAccessParamsUrls()
+        {
+            return _doc.XPathSelectElements($"/*/{DNS(XmlNames.AccessParams)}/{DNS(XmlNames.URL)}", _nm);
+        }
+
+        internal XElement GetAccessParamsInstitute()
+        {
+            return _doc.XPathSelectElement($"/*/{DNS(XmlNames.AccessParams)}/{DNS(XmlNames.Institute)}", _nm);
+        }        
     }
 }

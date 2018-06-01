@@ -23,5 +23,6 @@ namespace NetEbics
         HiaResponse HIA(HiaParams p);
         SprResponse SPR(SprParams p);
         CddResponse CDD(CddParams p);
+        HpdResponse HPD(HpdParams p);
     }
 }

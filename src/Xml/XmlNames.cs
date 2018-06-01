@@ -139,5 +139,9 @@ namespace NetEbics.Xml
         public const string Prtry = "Prtry";
         public const string ReqdColltnDt = "ReqdColltnDt";
         public const string AmdmntInd = "AmdmntInd";
+
+        public const string AccessParams = "AccessParams";
+        public const string URL = "URL";
+        public const string Institute = "Institute";
     }
 }
