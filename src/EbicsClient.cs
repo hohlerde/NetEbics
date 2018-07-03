@@ -31,21 +31,35 @@ namespace NetEbics
         }
     }
 
-    public class EbicsClient : IEbicsClient
+    public class EbicsClient : IEbicsClient, IDisposable
     {
         private static readonly ILogger Logger = EbicsLogging.CreateLogger<EbicsClient>();
         private EbicsConfig _config;
         private HttpClient _httpClient;
+        private HttpClientHandler _httpClientHandler;
         private readonly ProtocolHandler _protocolHandler;
         private readonly CommandHandler _commandHandler;
-
+        
+        protected volatile bool _disposed;
+        
         public EbicsConfig Config
         {
             get => _config;
             set
             {
                 _config = value ?? throw new ArgumentNullException(nameof(Config));
-                _httpClient = new HttpClient {BaseAddress = new Uri(_config.Address)};
+                _httpClientHandler = new HttpClientHandler();
+                if (_config.Insecure)
+                {
+                    _httpClientHandler.ServerCertificateCustomValidationCallback =
+                        (message, certificate2, chain, error) =>
+                        {
+                            Logger.LogDebug($"Ignoring certificate error {error}");
+                            return true;
+                        };
+                }
+
+                _httpClient = new HttpClient(_httpClientHandler) {BaseAddress = new Uri(_config.Address)};
                 _commandHandler.Config = value;
                 _protocolHandler.Client = _httpClient;
                 _commandHandler.ProtocolHandler = _protocolHandler;
@@ -79,7 +93,12 @@ namespace NetEbics
         private EbicsClient()
         {
             _protocolHandler = new ProtocolHandler();
-            _commandHandler = new CommandHandler();            
+            _commandHandler = new CommandHandler();
+        }
+
+        ~EbicsClient()
+        {
+            Dispose(false);
         }
 
         public HpbResponse HPB(HpbParams p)
@@ -153,7 +172,7 @@ namespace NetEbics
                 return resp;
             }
         }
-        
+
         public HpdResponse HPD(HpdParams p)
         {
             using (new MethodLogger(Logger))
@@ -161,6 +180,20 @@ namespace NetEbics
                 var resp = _commandHandler.Send<HpdResponse>(p);
                 return resp;
             }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed) return;
+            _disposed = true;
+            _httpClientHandler?.Dispose();
+            _httpClient?.Dispose();
         }
     }
 }
