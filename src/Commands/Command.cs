@@ -123,7 +123,13 @@ namespace NetEbics.Commands
                 out var parsed);
             return parsed;
         }
-
+        
+        protected DateTime ParseISO8601Timestamp(string dt)
+        {
+            DateTime.TryParse(dt, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsed);            
+            return parsed;
+        }
+        
         protected byte[] DecryptRsa(byte[] ciphertext)
         {
             using (new MethodLogger(s_logger))
