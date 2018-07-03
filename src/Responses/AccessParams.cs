@@ -5,8 +5,8 @@ namespace NetEbics.Responses
 {
     public class AccessParams
     {
-        public IEnumerable<Url> Urls { get; set; }
-        public string Institute { get; set; }
-        public string HostId { get; set; }
+        public IEnumerable<Url> Urls { get; internal set; }
+        public string Institute { get; internal set; }
+        public string HostId { get; internal set; }
     }
 }

@@ -4,7 +4,7 @@ namespace NetEbics.Responses
 {
     public class Url
     {
-        public DateTime? ValidFrom { get; set; }
-        public string Address { get; set; }
+        public DateTime? ValidFrom { get; internal set; }
+        public string Address { get; internal set; }
     }
 }

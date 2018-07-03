@@ -143,5 +143,15 @@ namespace NetEbics.Xml
         public const string AccessParams = "AccessParams";
         public const string URL = "URL";
         public const string Institute = "Institute";
+        public const string valid_from = "valid_from";
+        public const string ProtocolParams = "ProtocolParams";
+        public const string Protocol = "Protocol";
+        public const string Recovery = "Recovery";
+        public const string PreValidation = "PreValidation";
+        public const string X509Data = "X509Data";
+        public const string ClientDataDownload = "ClientDataDownload";
+        public const string DownloadableOrderData = "DownloadableOrderData";
+        public const string supported = "supported";
+        public const string persistent = "persistent";
     }
 }

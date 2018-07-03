@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Xml;
 using System.Xml.Linq;
@@ -9,7 +10,7 @@ using NetEbics.Handler;
 using NetEbics.Parameters;
 using NetEbics.Responses;
 using NetEbics.Xml;
-using Org.BouncyCastle.Asn1.Cms;
+using Version = NetEbics.Responses.Version;
 
 namespace NetEbics.Commands
 {
@@ -17,7 +18,7 @@ namespace NetEbics.Commands
     {
         private static readonly ILogger s_logger = EbicsLogging.CreateLogger<HpdCommand>();
         private string _transactionId;
-        
+
         internal HpdParams Params { private get; set; }
         internal override string OrderType => "HPD";
         internal override string OrderAttribute => "DZHNN";
@@ -25,7 +26,7 @@ namespace NetEbics.Commands
         internal override IList<XmlDocument> Requests => null;
         internal override XmlDocument InitRequest => CreateInitRequest();
         internal override XmlDocument ReceiptRequest => CreateReceiptRequest();
-        
+
         internal override DeserializeResponse Deserialize(string payload)
         {
             using (new MethodLogger(s_logger))
@@ -33,7 +34,7 @@ namespace NetEbics.Commands
                 try
                 {
                     var dr = base.Deserialize(payload);
-                    
+
                     if (dr.HasError || dr.IsRecoverySync)
                     {
                         return dr;
@@ -45,7 +46,7 @@ namespace NetEbics.Commands
                     }
 
                     _transactionId = dr.TransactionId;
-                    
+
                     var doc = XDocument.Parse(payload);
                     var xph = new XPathHelper(doc, Namespaces);
 
@@ -54,9 +55,59 @@ namespace NetEbics.Commands
                     var strResp = Encoding.UTF8.GetString(deflatedOd);
                     var hpdrod = XDocument.Parse(strResp);
                     var r = new XPathHelper(hpdrod, Namespaces);
-                    
+
                     s_logger.LogDebug("Order data:\n{orderData}", hpdrod.ToString());
 
+                    var urlList = new List<Url>();
+                    var xmlUrls = r.GetAccessParamsUrls();
+                    foreach (var xmlUrl in xmlUrls)
+                    {
+                        var validFrom = ParseISO8601Timestamp(xmlUrl.Attribute(XmlNames.valid_from)?.Value);
+                        urlList.Add(new Url {ValidFrom = validFrom, Address = xmlUrl.Value});
+                    }
+
+                    var accessParams = new AccessParams
+                    {
+                        Urls = urlList,
+                        HostId = r.GetAccessParamsHostId()?.Value,
+                        Institute = r.GetAccessParamsInstitute()?.Value
+                    };
+
+                    var version = new Version
+                    {
+                        Protocols = r.GetProtocolParamsProtocol()?.Value.Trim().Split(" ").ToList(),
+                        Authentications = r.GetProtocolParamsAuthentication()?.Value.Trim().Split(" ").ToList(),
+                        Encryptions = r.GetProtocolParamsEncryption()?.Value.Trim().Split(" ").ToList(),
+                        Signatures =  r.GetProtocolParamsSignature()?.Value.Trim().Split(" ").ToList()
+                    };
+
+                    bool.TryParse(r.GetProtocolParamsRecovery()?.Attribute(XmlNames.supported)?.Value,
+                        out var recoverySupp);
+                    bool.TryParse(r.GetProtocolParamsPreValidation()?.Attribute(XmlNames.supported)?.Value,
+                        out var preValidationSupp);
+                    bool.TryParse(r.GetProtocolParamsX509Data()?.Attribute(XmlNames.supported)?.Value,
+                        out var x509Supp);
+                    bool.TryParse(r.GetProtocolParamsX509Data()?.Attribute(XmlNames.persistent)?.Value,
+                        out var x509Pers);
+                    bool.TryParse(r.GetProtocolParamsClientDataDownload()?.Attribute(XmlNames.supported)?.Value,
+                        out var clientDataDownloadSupp);
+                    bool.TryParse(r.GetProtocolParamsDownloadableOrderData()?.Attribute(XmlNames.supported)?.Value,
+                        out var downloadableOrderDataSupp);
+
+                    var protocolParams = new ProtocolParams
+                    {
+                        Version = version,
+                        RecoverySupported = recoverySupp,
+                        PreValidationSupported = preValidationSupp,
+                        X509DataSupported = x509Supp,
+                        X509DataPersistent = x509Pers,
+                        ClientDataDownloadSupported = clientDataDownloadSupp,
+                        DownloadableOrderDataSupported = downloadableOrderDataSupp                        
+                    };
+
+                    Response.AccessParams = accessParams;
+                    Response.ProtocolParams = protocolParams;
+                    
                     return dr;
                 }
                 catch (EbicsException)
@@ -141,7 +192,7 @@ namespace NetEbics.Commands
                                 Namespaces = Namespaces,
                                 OrderAttribute = OrderAttribute,
                                 OrderType = OrderType,
-                                StandardOrderParams = new EmptyOrderParams 
+                                StandardOrderParams = new EmptyOrderParams
                                 {
                                     Namespaces = Namespaces,
                                 }

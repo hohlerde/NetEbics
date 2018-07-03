@@ -218,6 +218,56 @@ namespace NetEbics.Xml
         internal XElement GetAccessParamsInstitute()
         {
             return _doc.XPathSelectElement($"/*/{DNS(XmlNames.AccessParams)}/{DNS(XmlNames.Institute)}", _nm);
-        }        
+        }
+        
+        internal XElement GetAccessParamsHostId()
+        {
+            return _doc.XPathSelectElement($"/*/{DNS(XmlNames.AccessParams)}/{DNS(XmlNames.HostID)}", _nm);
+        }
+        
+        internal XElement GetProtocolParamsProtocol()
+        {
+            return _doc.XPathSelectElement($"/*/{DNS(XmlNames.ProtocolParams)}/{DNS(XmlNames.Version)}/{DNS(XmlNames.Protocol)}", _nm);
+        }
+        
+        internal XElement GetProtocolParamsAuthentication()
+        {
+            return _doc.XPathSelectElement($"/*/{DNS(XmlNames.ProtocolParams)}/{DNS(XmlNames.Version)}/{DNS(XmlNames.Authentication)}", _nm);
+        }
+        
+        internal XElement GetProtocolParamsEncryption()
+        {
+            return _doc.XPathSelectElement($"/*/{DNS(XmlNames.ProtocolParams)}/{DNS(XmlNames.Version)}/{DNS(XmlNames.Encryption)}", _nm);
+        }
+        
+        internal XElement GetProtocolParamsSignature()
+        {
+            return _doc.XPathSelectElement($"/*/{DNS(XmlNames.ProtocolParams)}/{DNS(XmlNames.Version)}/{DNS(XmlNames.Signature)}", _nm);
+        }
+        
+        internal XElement GetProtocolParamsRecovery()
+        {
+            return _doc.XPathSelectElement($"/*/{DNS(XmlNames.ProtocolParams)}/{DNS(XmlNames.Recovery)}", _nm);
+        }
+        
+        internal XElement GetProtocolParamsPreValidation()
+        {
+            return _doc.XPathSelectElement($"/*/{DNS(XmlNames.ProtocolParams)}/{DNS(XmlNames.PreValidation)}", _nm);
+        }
+        
+        internal XElement GetProtocolParamsX509Data()
+        {
+            return _doc.XPathSelectElement($"/*/{DNS(XmlNames.ProtocolParams)}/{DNS(XmlNames.X509Data)}", _nm);
+        }
+        
+        internal XElement GetProtocolParamsClientDataDownload()
+        {
+            return _doc.XPathSelectElement($"/*/{DNS(XmlNames.ProtocolParams)}/{DNS(XmlNames.ClientDataDownload)}", _nm);
+        }
+        
+        internal XElement GetProtocolParamsDownloadableOrderData()
+        {
+            return _doc.XPathSelectElement($"/*/{DNS(XmlNames.ProtocolParams)}/{DNS(XmlNames.DownloadableOrderData)}", _nm);
+        }
     }
 }
