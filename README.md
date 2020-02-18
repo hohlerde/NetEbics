@@ -1,3 +1,7 @@
+# Important
+
+**This repository has moved to https://codeberg.org/hohlerde/NetEbics**
+
 # NetEbics -- .NET Core EBICS Client Library
 
 This is a client library implementing the [EBICS](http://www.ebics.org) protocol for business online banking.
