@@ -6,6 +6,9 @@
  * file 'LICENSE.txt', which is part of this source code package.
  */
 
+using System;
+using System.Collections.Generic;
+using System.Dynamic;
 using System.Xml;
 using System.Xml.Linq;
 using System.Xml.XPath;
@@ -168,23 +171,103 @@ namespace NetEbics.Xml
             return _doc.XPathSelectElement(
                 $"/*/{DNS(XmlNames.header)}/{DNS(XmlNames.staticHeader)}/{DNS(XmlNames.TransactionID)}", _nm);
         }
-        
+
         internal XElement GetNumSegments()
         {
             return _doc.XPathSelectElement(
                 $"/*/{DNS(XmlNames.header)}/{DNS(XmlNames.staticHeader)}/{DNS(XmlNames.NumSegments)}", _nm);
         }
-        
+
         internal XElement GetTransactionPhase()
         {
             return _doc.XPathSelectElement(
                 $"/*/{DNS(XmlNames.header)}/{DNS(XmlNames.mutable)}/{DNS(XmlNames.TransactionPhase)}", _nm);
         }
-        
+
         internal XElement GetSegmentNumber()
         {
             return _doc.XPathSelectElement(
                 $"/*/{DNS(XmlNames.header)}/{DNS(XmlNames.mutable)}/{DNS(XmlNames.SegmentNumber)}", _nm);
+        }
+
+        internal XElement GetAuthSignatureDigestValue()
+        {
+            return _doc.XPathSelectElement(
+                $"/*/{DNS(XmlNames.AuthSignature)}/{SNS(XmlNames.SignedInfo)}/{SNS(XmlNames.Reference)}/{SNS(XmlNames.DigestValue)}",
+                _nm);
+        }
+
+        internal XElement GetAuthSignatureValue()
+        {
+            return _doc.XPathSelectElement(
+                $"/*/{DNS(XmlNames.AuthSignature)}/{SNS(XmlNames.SignatureValue)}", _nm);
+        }
+
+        internal IEnumerable<XElement> GetAuthSignatureReferences()
+        {
+            return _doc.XPathSelectElements(
+                $"/*/{DNS(XmlNames.AuthSignature)}/{SNS(XmlNames.SignedInfo)}/{SNS(XmlNames.Reference)}",
+                _nm);
+        }
+
+        internal IEnumerable<XElement> GetAccessParamsUrls()
+        {
+            return _doc.XPathSelectElements($"/*/{DNS(XmlNames.AccessParams)}/{DNS(XmlNames.URL)}", _nm);
+        }
+
+        internal XElement GetAccessParamsInstitute()
+        {
+            return _doc.XPathSelectElement($"/*/{DNS(XmlNames.AccessParams)}/{DNS(XmlNames.Institute)}", _nm);
+        }
+        
+        internal XElement GetAccessParamsHostId()
+        {
+            return _doc.XPathSelectElement($"/*/{DNS(XmlNames.AccessParams)}/{DNS(XmlNames.HostID)}", _nm);
+        }
+        
+        internal XElement GetProtocolParamsProtocol()
+        {
+            return _doc.XPathSelectElement($"/*/{DNS(XmlNames.ProtocolParams)}/{DNS(XmlNames.Version)}/{DNS(XmlNames.Protocol)}", _nm);
+        }
+        
+        internal XElement GetProtocolParamsAuthentication()
+        {
+            return _doc.XPathSelectElement($"/*/{DNS(XmlNames.ProtocolParams)}/{DNS(XmlNames.Version)}/{DNS(XmlNames.Authentication)}", _nm);
+        }
+        
+        internal XElement GetProtocolParamsEncryption()
+        {
+            return _doc.XPathSelectElement($"/*/{DNS(XmlNames.ProtocolParams)}/{DNS(XmlNames.Version)}/{DNS(XmlNames.Encryption)}", _nm);
+        }
+        
+        internal XElement GetProtocolParamsSignature()
+        {
+            return _doc.XPathSelectElement($"/*/{DNS(XmlNames.ProtocolParams)}/{DNS(XmlNames.Version)}/{DNS(XmlNames.Signature)}", _nm);
+        }
+        
+        internal XElement GetProtocolParamsRecovery()
+        {
+            return _doc.XPathSelectElement($"/*/{DNS(XmlNames.ProtocolParams)}/{DNS(XmlNames.Recovery)}", _nm);
+        }
+        
+        internal XElement GetProtocolParamsPreValidation()
+        {
+            return _doc.XPathSelectElement($"/*/{DNS(XmlNames.ProtocolParams)}/{DNS(XmlNames.PreValidation)}", _nm);
+        }
+        
+        internal XElement GetProtocolParamsX509Data()
+        {
+            return _doc.XPathSelectElement($"/*/{DNS(XmlNames.ProtocolParams)}/{DNS(XmlNames.X509Data)}", _nm);
+        }
+        
+        internal XElement GetProtocolParamsClientDataDownload()
+        {
+            return _doc.XPathSelectElement($"/*/{DNS(XmlNames.ProtocolParams)}/{DNS(XmlNames.ClientDataDownload)}", _nm);
+        }
+        
+        internal XElement GetProtocolParamsDownloadableOrderData()
+        {
+            return _doc.XPathSelectElement($"/*/{DNS(XmlNames.ProtocolParams)}/{DNS(XmlNames.DownloadableOrderData)}", _nm);
         }
     }
 }

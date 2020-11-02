@@ -21,6 +21,7 @@ namespace NetEbics.Config
     public abstract class KeyPair<T> : IDisposable
     {
         private static readonly Stateprinter _printer;
+        protected volatile bool _disposed;
         
         protected RSA _publicKey;
         protected RSA _privateKey;
@@ -82,22 +83,26 @@ namespace NetEbics.Config
 
         public T Version { get; set; }
 
-        protected virtual void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                _publicKey?.Dispose();
-                _privateKey?.Dispose();
-                _cert?.Dispose();
-            }
-        }
-
         public void Dispose()
         {
             Dispose(true);
             GC.SuppressFinalize(this);
         }
 
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed) return;
+            _disposed = true;
+            _publicKey?.Dispose();
+            _privateKey?.Dispose();
+            _cert?.Dispose();
+        }
+
+        ~KeyPair()
+        {
+            Dispose(false);    
+        }
+        
         static KeyPair()
         {
             var cfg = new Configuration();

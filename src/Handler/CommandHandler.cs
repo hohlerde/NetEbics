@@ -56,6 +56,9 @@ namespace NetEbics.Handler
                     case CddParams cdd:
                         cmd = new CddCommand {Params = cdd, Config = Config, Namespaces = Namespaces};
                         break;
+                    case HpdParams hpd:
+                        cmd = new HpdCommand {Params = hpd, Config = Config, Namespaces = Namespaces};
+                        break;
                 }
 
                 s_logger.LogDebug("Command created: {cmd}", cmd?.ToString());

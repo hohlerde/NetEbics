@@ -30,6 +30,7 @@ namespace NetEbics.Commands
         internal override IList<XmlDocument> Requests => CreateRequests();
         internal override XmlDocument InitRequest => null;
         internal override XmlDocument ReceiptRequest => null;
+        protected override bool VerifyAuthenticationSignature => false;
 
         private IList<XmlDocument> CreateRequests()
         {

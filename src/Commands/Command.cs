@@ -40,6 +40,8 @@ namespace NetEbics.Commands
         internal abstract XmlDocument InitRequest { get; }
         internal abstract XmlDocument ReceiptRequest { get; }
 
+        protected virtual bool VerifyAuthenticationSignature => true;
+
         protected static string s_signatureAlg => "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256";
         protected static string s_digestAlg => "http://www.w3.org/2001/04/xmlenc#sha256";
 
@@ -54,6 +56,11 @@ namespace NetEbics.Commands
         {
             using (new MethodLogger(s_logger))
             {
+                if (VerifyAuthenticationSignature)
+                {
+                    VerifyXml(payload);
+                }
+
                 var doc = XDocument.Parse(payload);
                 var xph = new XPathHelper(doc, Namespaces);
                 int.TryParse(xph.GetTechReturnCode()?.Value, out var techCode);
@@ -116,7 +123,13 @@ namespace NetEbics.Commands
                 out var parsed);
             return parsed;
         }
-
+        
+        protected DateTime ParseISO8601Timestamp(string dt)
+        {
+            DateTime.TryParse(dt, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsed);            
+            return parsed;
+        }
+        
         protected byte[] DecryptRsa(byte[] ciphertext)
         {
             using (new MethodLogger(s_logger))
@@ -294,6 +307,32 @@ namespace NetEbics.Commands
 
                 return doc;
             }
+        }
+
+        protected void VerifyXml(string payload)
+        {
+            var xmlDoc = new XmlDocument { PreserveWhitespace = true};
+            xmlDoc.LoadXml(payload);
+            var sigDoc = new CustomSignedXml(xmlDoc)
+            {
+                Namespaces = Namespaces,
+                SignatureKey = Config.Bank.AuthKeys.PublicKey,
+                SignaturePadding = RSASignaturePadding.Pkcs1,
+                CanonicalizationAlgorithm = SignedXml.XmlDsigC14NTransformUrl,
+                SignatureAlgorithm = s_signatureAlg,
+                DigestAlgorithm = s_digestAlg,
+                ReferenceUri = CustomSignedXml.DefaultReferenceUri
+            };
+
+            if (sigDoc.VerifySignature())
+            {
+                s_logger.LogDebug($"Authentication OK for {OrderType} response");
+                return;
+            }
+            
+            s_logger.LogError($"Authentication erroneous for {OrderType} response");
+            throw new DeserializationException($"Authentication erroneous for {OrderType} response",
+                payload);
         }
 
         protected byte[] SignData(byte[] data, SignKeyPair kp)
