@@ -313,4 +313,4 @@ public MyController(ILoggerFactory loggerFactory)
 
 # License
 
-See the file LICENSE.txt for further information.
+See the file LICENSE for further information.
